@@ -13,6 +13,11 @@ OUT = ROOT / "playlists"
 API = "https://iptv-org.github.io/api/"
 
 ARAB_COUNTRIES = {"SA","AE","EG","QA","KW","BH","OM","JO","LB","SY","IQ","PS","YE","LY","TN","DZ","MA","SD","MR","SO","DJ","KM"}
+COUNTRY_NAMES = {"SA": "Saudi Arabia", "AE": "UAE", "EG": "Egypt", "QA": "Qatar", "KW": "Kuwait",
+                 "BH": "Bahrain", "OM": "Oman", "JO": "Jordan", "LB": "Lebanon", "SY": "Syria",
+                 "IQ": "Iraq", "PS": "Palestine", "YE": "Yemen", "LY": "Libya", "TN": "Tunisia",
+                 "DZ": "Algeria", "MA": "Morocco", "SD": "Sudan", "MR": "Mauritania",
+                 "SO": "Somalia", "DJ": "Djibouti", "KM": "Comoros"}
 KIDS_CATS = {"kids", "animation"}
 SKIP_CATS = {"xxx"}
 
@@ -23,6 +28,17 @@ def load(name):
         DATA.mkdir(exist_ok=True)
         urllib.request.urlretrieve(API + f"{name}.json", p)
     return json.loads(p.read_text(encoding="utf-8"))
+
+
+def group_of(i):
+    """Group shown in the player's channel list: Kids, MBC, then country, else category."""
+    if i["kids"]:
+        return "Kids"
+    if re.match(r"MBC\b", i["name"], re.I):
+        return "MBC"
+    if i["country"] in COUNTRY_NAMES:
+        return COUNTRY_NAMES[i["country"]]
+    return i["cats"][0].title() if i["cats"] else "General"
 
 
 def height(q):
@@ -109,13 +125,13 @@ def main():
             k = (i["id"], i["kids"])
             if k not in best or i["q"] > best[k]["q"]:
                 best[k] = i
-        final = sorted(best.values(), key=lambda i: (-i["q"], i["name"].lower()))
+        final = sorted(best.values(), key=lambda i: (group_of(i) != "MBC", group_of(i), -i["q"], i["name"].lower()))
         for base, kids in (("arabic_kids", True), ("arabic_general", False)):
             fname = f"{base}{suffix}.m3u"
             lines = ["#EXTM3U"]
             sel = [i for i in final if i["kids"] == kids]
             for i in sel:
-                grp = "Kids" if kids else (i["cats"][0].title() if i["cats"] else "General")
+                grp = group_of(i)
                 lines.append(f'#EXTINF:-1 tvg-id="{i["id"]}" tvg-logo="{logos.get(i["id"], "")}" '
                              f'group-title="{grp}",{i["name"]} [{i["q"] or "?"}p]')
                 if i["ua"]:

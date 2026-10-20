@@ -11,6 +11,7 @@ Free, auto-updating **M3U playlists of Arabic TV channels**, split into two list
 
 Not sure which to pick? Use the **720p+ (HD)** lists if your TV and internet are good. They have fewer channels, but all of them are HD. Use the standard lists if you want the most channels.
 
+- Channels are grouped in your player's list: **MBC** (all MBC channels together), then one group per country (**UAE**, **Syria**, **Saudi Arabia**, **Egypt**, **Iraq**, ...), then a few topic groups. Kids channels are in the separate Kids lists.
 - Dead links are removed. Every stream is tested before it is listed.
 - Quality is read from the stream itself, and each channel name shows it (for example `[1080p]`).
 - Best quality is listed first, and only the best stream per channel is kept.
