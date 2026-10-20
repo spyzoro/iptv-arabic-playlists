@@ -1,37 +1,121 @@
 # Arabic IPTV Playlists
 
-Auto-updated M3U playlists of free, publicly available Arabic TV channels, built from the [iptv-org](https://github.com/iptv-org/iptv) database.
+Free, auto-updating **M3U playlists of Arabic TV channels**, split into two lists so kids' channels stay separate from everything else.
 
-| Playlist | Contents |
+| Playlist | What's in it | URL |
+|---|---|---|
+| **General** | News, sports, movies, music, entertainment, religion, etc. | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_general.m3u` |
+| **Kids** | Kids and animation channels only (Spacetoon, MBC 3, Sat 7 Kids, ...) | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_kids.m3u` |
+
+- Dead links are removed. Every stream is tested before it is listed.
+- Quality is read from the stream itself, and each channel name shows it (for example `[1080p]`).
+- Best quality is listed first, and only the best stream per channel is kept.
+- The lists are rebuilt automatically every Monday, so you never need to re-download anything.
+
+> **Heads up:** the kids list is small (about 8 channels). Free Arabic kids channels in HD are rare.
+
+---
+
+## Quick start (60 seconds)
+
+1. Open any IPTV player (see [Apps](#apps-that-work) below).
+2. Choose **Add playlist** and then **From URL**.
+3. Paste the General URL from the table above. Add the Kids URL as a second, separate playlist.
+4. Done. Your player re-downloads the list on its own, so you get updates automatically.
+
+Tip: if your player asks for a "name", call them `Arabic` and `Arabic Kids`. You can then put a PIN or parental lock on the kids list, or just leave the general one off the kids' profile.
+
+---
+
+## Apps that work
+
+Any player that accepts an M3U URL works. Some common ones:
+
+| Device | App | How to add the playlist |
+|---|---|---|
+| **LG webOS TV** | Smart IPTV (paid, one-time fee), SS IPTV, IPTV Smarters | Install from the LG Content Store. Add the URL in the app's settings, or use the app's website with your TV's MAC address. |
+| **Samsung Tizen TV** | Smart IPTV, SS IPTV | Same as above. |
+| **Android / Android TV / Fire TV** | TiviMate, IPTV Smarters, OTT Navigator | Add playlist, then M3U URL. |
+| **iPhone / iPad / Apple TV** | IPTVX, GSE Smart IPTV | Add playlist, then Remote URL. |
+| **Windows / Mac / Linux / any** | VLC | Media, then Open Network Stream, then paste the URL. |
+| **Kodi** | PVR IPTV Simple Client | Add-on settings, then General, then M3U playlist URL. |
+
+App availability changes by region and over time. If one isn't in your store, try another from the list.
+
+### LG webOS example (Smart IPTV)
+
+1. Install **Smart IPTV** from the LG Content Store and open it. Note the **MAC address** shown on screen.
+2. On your phone or PC, go to the Smart IPTV website, "My list" page.
+3. Enter the MAC address, paste the General URL, and upload. Repeat the process for the Kids URL if the app supports a second list.
+4. Restart the app on the TV.
+
+---
+
+## What if a channel doesn't play?
+
+- **Streams are run by third parties** and can go offline at any time. The weekly rebuild removes dead ones.
+- Some channels are **geo-blocked** and only play in certain countries. A VPN may help, or may not.
+- If the whole list is empty, check that you pasted the **raw** URL (it starts with `raw.githubusercontent.com`) and not the normal GitHub page URL.
+- If an app complains about the format, make sure it supports `.m3u` / `.m3u8` playlists.
+
+---
+
+## Make your own copy (optional)
+
+You can run your own copy, for example to change the quality limit or to include other countries. No server is needed. GitHub does the work for free.
+
+1. Click **Fork** at the top of this page.
+2. In your fork, open the **Actions** tab and click *"I understand my workflows, go ahead and enable them"*.
+3. Open **Actions**, then **Rebuild playlists**, then **Run workflow**. This builds your lists straight away, and after that they rebuild weekly.
+4. Your playlist URLs become:
+   `https://raw.githubusercontent.com/YOUR-USERNAME/iptv-arabic-playlists/main/playlists/arabic_general.m3u`
+   (and the same for `arabic_kids.m3u`).
+
+### Run it on your own computer
+
+You need **Python 3.9 or newer**. No extra packages are required.
+
+```bash
+git clone https://github.com/spyzoro/iptv-arabic-playlists.git
+cd iptv-arabic-playlists
+python build.py
+```
+
+The new lists are written to the `playlists/` folder. Options:
+
+| Option | Meaning |
 |---|---|
-| `playlists/arabic_general.m3u` | News, sports, movies, music, etc. |
-| `playlists/arabic_kids.m3u` | Kids / animation channels only |
+| `--min 720` | Only keep channels at 720p or better (HD). The default is `480`. |
+| `--min 0` | Keep everything, even if the quality is unknown. |
+| `--no-check` | Skip the "is it alive?" test. Faster, but may include dead links. |
 
-Channels are health-checked (dead links dropped), real resolution is read from each stream, and the list is sorted best quality first. Default minimum is 480p; kids channels are scarce at 720p+.
+The channel data is downloaded into a `data/` folder on the first run. Delete that folder to fetch fresh data.
 
-## Use on an LG webOS TV
+### Customise
 
-1. Install an IPTV app from the LG Content Store (e.g. **Smart IPTV**, **SS IPTV**, **IPTV Smarters**).
-2. Add the playlists by URL (after pushing to GitHub, replace `USER`/`REPO`):
-   - `https://raw.githubusercontent.com/USER/REPO/main/playlists/arabic_general.m3u`
-   - `https://raw.githubusercontent.com/USER/REPO/main/playlists/arabic_kids.m3u`
-3. Keep them as two separate playlists so kids content stays separate.
+Open `build.py` and edit the settings at the top:
 
-The apps re-fetch the URL, so weekly rebuilds reach the TV automatically.
+- `ARAB_COUNTRIES` is the list of countries treated as Arabic.
+- `KIDS_CATS` is the categories that go into the Kids list.
 
-## Rebuild manually
+---
 
-```
-python build.py              # min 480p
-python build.py --min 720    # HD only
-python build.py --no-check   # skip liveness check (fast, may include dead links)
-```
+## How it works
 
-Requires Python 3.9+, no extra packages. Source data is downloaded into `data/` on first run (delete it to refresh).
+1. Downloads the open channel database from [iptv-org](https://github.com/iptv-org/iptv).
+2. Keeps channels that broadcast in Arabic or come from Arab countries. Adult channels and closed channels are removed.
+3. Fetches every stream to check it's alive and reads its real resolution.
+4. Splits channels into Kids and General, keeps the best stream per channel, and writes the two `.m3u` files.
+5. A GitHub Actions workflow (`.github/workflows/rebuild.yml`) repeats this every Monday and commits the result.
 
-A GitHub Actions workflow (`.github/workflows/rebuild.yml`) rebuilds every Monday and commits changes.
+---
 
-## Notes
+## Disclaimer
 
-- Streams are third-party and can disappear or be geo-blocked; the weekly rebuild prunes dead ones.
-- Only legally free-to-air / publicly listed streams from iptv-org are used.
+This project **does not host or restream any content**. It only publishes a list of links that are already publicly listed in the [iptv-org](https://github.com/iptv-org/iptv) database. All channels belong to their respective owners. You are responsible for making sure that watching them is legal where you live. If you own a channel and want it removed, contact iptv-org, since it is the source of the data, or open an issue here.
+
+## Credits
+
+Channel data and logos: [iptv-org](https://github.com/iptv-org/iptv) (Unlicense).
+
+Found a bug or a missing channel? Open an issue. Pull requests are welcome.
