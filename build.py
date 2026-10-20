@@ -1,7 +1,7 @@
 """Build Arabic IPTV playlists (general + kids) from the iptv-org database.
 
-Usage: python build.py [--min 720] [--no-check]
-Output: playlists/arabic_general.m3u, playlists/arabic_kids.m3u
+Usage: python build.py [--min 480] [--hd 720] [--no-check]
+Output: playlists/arabic_{general,kids}.m3u and ..._720p.m3u (HD only)
 """
 import argparse, json, re, urllib.request, urllib.error
 from concurrent.futures import ThreadPoolExecutor
@@ -49,7 +49,8 @@ def check(url, ua=None, ref=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--min", type=int, default=480, help="min height; 0 keeps unknown quality")
+    ap.add_argument("--min", type=int, default=480, help="min height for the standard lists; 0 keeps everything")
+    ap.add_argument("--hd", type=int, default=720, help="min height for the *_720p lists; 0 skips them")
     ap.add_argument("--no-check", action="store_true")
     a = ap.parse_args()
 
@@ -57,6 +58,7 @@ def main():
     feeds = {(f["channel"], f["id"]): f for f in load("feeds")}
     streams = load("streams")
 
+    floor = min(x for x in (a.min, a.hd) if x) if (a.min or a.hd) else 0
     items = []
     for s in streams:
         cid = s.get("channel")
@@ -72,7 +74,7 @@ def main():
         if f and langs and "ara" not in langs:
             continue
         q = height(s.get("quality"))
-        if a.min and q and q < a.min:
+        if floor and q and q < floor:
             continue
         kids = bool(set(c["categories"]) & KIDS_CATS)
         items.append(dict(id=cid, name=c["name"], country=c["country"], cats=c["categories"],
@@ -89,36 +91,40 @@ def main():
                 continue
             if h:
                 i["q"] = h
-            if a.min and i["q"] and i["q"] < a.min:
+            if floor and i["q"] and i["q"] < floor:
                 continue
             alive.append(i)
         print(f"{len(alive)} alive")
         items = alive
 
-    # best stream per channel, highest quality first
-    best = {}
-    for i in items:
-        k = (i["id"], i["kids"])
-        if k not in best or i["q"] > best[k]["q"]:
-            best[k] = i
-    final = sorted(best.values(), key=lambda i: (-i["q"], i["name"].lower()))
-
     OUT.mkdir(exist_ok=True)
     logos = {l["channel"]: l["url"] for l in load("logos")}
-    for fname, kids in (("arabic_kids.m3u", True), ("arabic_general.m3u", False)):
-        lines = ["#EXTM3U"]
-        sel = [i for i in final if i["kids"] == kids]
-        for i in sel:
-            grp = "Kids" if kids else (i["cats"][0].title() if i["cats"] else "General")
-            lines.append(f'#EXTINF:-1 tvg-id="{i["id"]}" tvg-logo="{logos.get(i["id"], "")}" '
-                         f'group-title="{grp}",{i["name"]} [{i["q"] or "?"}p]')
-            if i["ua"]:
-                lines.append(f'#EXTVLCOPT:http-user-agent={i["ua"]}')
-            if i["ref"]:
-                lines.append(f'#EXTVLCOPT:http-referrer={i["ref"]}')
-            lines.append(i["url"])
-        (OUT / fname).write_text("\n".join(lines) + "\n", encoding="utf-8")
-        print(fname, len(sel), "channels")
+    variants = [(a.min, "")] + ([(a.hd, f"_{a.hd}p")] if a.hd else [])
+    for level, suffix in variants:
+        # unknown quality (0) only allowed in the standard lists; HD lists need proof
+        pool = [i for i in items if i["q"] >= level or (i["q"] == 0 and level <= 480)]
+        # best stream per channel, highest quality first
+        best = {}
+        for i in pool:
+            k = (i["id"], i["kids"])
+            if k not in best or i["q"] > best[k]["q"]:
+                best[k] = i
+        final = sorted(best.values(), key=lambda i: (-i["q"], i["name"].lower()))
+        for base, kids in (("arabic_kids", True), ("arabic_general", False)):
+            fname = f"{base}{suffix}.m3u"
+            lines = ["#EXTM3U"]
+            sel = [i for i in final if i["kids"] == kids]
+            for i in sel:
+                grp = "Kids" if kids else (i["cats"][0].title() if i["cats"] else "General")
+                lines.append(f'#EXTINF:-1 tvg-id="{i["id"]}" tvg-logo="{logos.get(i["id"], "")}" '
+                             f'group-title="{grp}",{i["name"]} [{i["q"] or "?"}p]')
+                if i["ua"]:
+                    lines.append(f'#EXTVLCOPT:http-user-agent={i["ua"]}')
+                if i["ref"]:
+                    lines.append(f'#EXTVLCOPT:http-referrer={i["ref"]}')
+                lines.append(i["url"])
+            (OUT / fname).write_text("\n".join(lines) + "\n", encoding="utf-8")
+            print(fname, len(sel), "channels")
 
 
 if __name__ == "__main__":

@@ -4,15 +4,19 @@ Free, auto-updating **M3U playlists of Arabic TV channels**, split into two list
 
 | Playlist | What's in it | URL |
 |---|---|---|
-| **General** | News, sports, movies, music, entertainment, religion, etc. | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_general.m3u` |
-| **Kids** | Kids and animation channels only (Spacetoon, MBC 3, Sat 7 Kids, ...) | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_kids.m3u` |
+| **General** | News, sports, movies, music, entertainment, religion, etc. (480p and up) | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_general.m3u` |
+| **Kids** | Kids and animation channels only (480p and up) | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_kids.m3u` |
+| **General 720p+ (HD)** | Same as General, but only channels confirmed at 720p or better | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_general_720p.m3u` |
+| **Kids 720p+ (HD)** | Same as Kids, but only 720p or better | `https://raw.githubusercontent.com/spyzoro/iptv-arabic-playlists/main/playlists/arabic_kids_720p.m3u` |
+
+Not sure which to pick? Use the **720p+ (HD)** lists if your TV and internet are good. They have fewer channels, but all of them are HD. Use the standard lists if you want the most channels.
 
 - Dead links are removed. Every stream is tested before it is listed.
 - Quality is read from the stream itself, and each channel name shows it (for example `[1080p]`).
 - Best quality is listed first, and only the best stream per channel is kept.
 - The lists are rebuilt automatically every Monday, so you never need to re-download anything.
 
-> **Heads up:** the kids list is small (about 8 channels). Free Arabic kids channels in HD are rare.
+> **Heads up:** the kids list is small (about 8 channels, 6 in HD). Free Arabic kids channels in HD are rare.
 
 ---
 
@@ -85,7 +89,8 @@ The new lists are written to the `playlists/` folder. Options:
 
 | Option | Meaning |
 |---|---|
-| `--min 720` | Only keep channels at 720p or better (HD). The default is `480`. |
+| `--min 720` | Make the standard lists 720p or better too. The default is `480`. |
+| `--hd 1080` | Change the cutoff of the `*_720p` lists (default `720`). Use `--hd 0` to skip them. |
 | `--min 0` | Keep everything, even if the quality is unknown. |
 | `--no-check` | Skip the "is it alive?" test. Faster, but may include dead links. |
 
@@ -105,7 +110,7 @@ Open `build.py` and edit the settings at the top:
 1. Downloads the open channel database from [iptv-org](https://github.com/iptv-org/iptv).
 2. Keeps channels that broadcast in Arabic or come from Arab countries. Adult channels and closed channels are removed.
 3. Fetches every stream to check it's alive and reads its real resolution.
-4. Splits channels into Kids and General, keeps the best stream per channel, and writes the two `.m3u` files.
+4. Splits channels into Kids and General, keeps the best stream per channel, and writes the `.m3u` files (standard and HD).
 5. A GitHub Actions workflow (`.github/workflows/rebuild.yml`) repeats this every Monday and commits the result.
 
 ---
